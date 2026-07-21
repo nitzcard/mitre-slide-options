@@ -1,12 +1,12 @@
 # MITRE v19 Slide Options
 
-Static prototype for comparing presentation-friendly Cardinal MITRE v19 layouts and exporting 1920×1080 PNGs.
+Static prototype for comparing presentation-friendly Cardinal MITRE v19 layouts and exporting a 1920×1080 PNG from each layout tab.
 
 ## Open locally
 
 Open `index.html` directly in a browser. No build command, package installation, or local server is required.
 
-The PNG and ZIP export libraries load from CDN, so an internet connection is required for exports.
+The PNG export library loads from CDN, so an internet connection is required for exports.
 
 ## Review workflow
 
@@ -14,7 +14,9 @@ The PNG and ZIP export libraries load from CDN, so an internet connection is req
 - Use **Uncovered techniques** as a separate client coverage option.
 - Test the variation checkboxes inside each tab.
 - Copy the generated boolean variation object for feedback.
-- **Calculate ghosts** is available only for the weighted matrix; weighted techniques always flow top-to-bottom.
+- Preferred minimum font size is controlled by the scoped CSS variable `--min-font-size`: 12px for the weighted matrix and 10px for lanes. The layout keeps that value whenever possible and only shrinks further when necessary to prevent clipping.
+- **Stretch techniques to fill tactic container** is available only for the weighted matrix. When uncovered techniques are hidden, it removes their reserved positions and stretches the visible techniques to fill the tactic container.
+- Technique order is fixed in both layouts: low health (red) at the top, followed by progressively better health, with uncovered techniques last. Weighted-matrix grids use CSS row flow so each full row is painted before moving down to the next one.
 
 ## Deploy
 

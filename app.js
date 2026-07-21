@@ -2,8 +2,6 @@
   const root = document.getElementById('mitre-v19-options');
   const slides = root.querySelector('#v19-slides');
   const optionTabs = root.querySelector('#v19-option-tabs');
-  const exportAllButton = root.querySelector('#v19-export-all');
-  const exportStatus = root.querySelector('#v19-export-status');
   const tactics = window.CARDINAL_MITRE_V19;
   if (!Array.isArray(tactics)) throw new Error('Cardinal MITRE v19 data failed to load.');
   const options = [
@@ -13,7 +11,7 @@
   const optionStates = new Map(options.map(option => [option.id, {
     uncoveredTechniques: true,
     uniformFontSize: true,
-    calculateGhosts: option.id === 'weighted'
+    fillTacticEmptySpace: option.id === 'weighted'
   }]));
   const panelControls = new Map();
   let activeOptionId = options[0].id;
@@ -22,6 +20,12 @@
     'health-medium': 50,
     'health-high': 80,
     'health-full': 100
+  };
+  const healthOrder = {
+    'health-low': 0,
+    'health-medium': 1,
+    'health-high': 2,
+    'health-full': 3
   };
   function buildTechniqueView(technique, tacticIndex, sourceIndex) {
     const healthStates = ['health-full', 'health-full', 'health-high', 'health-medium', 'health-low'];
@@ -41,7 +45,8 @@
     }
     if (techniqueA.relatedEntitiesCount === 0) return 1;
     if (techniqueB.relatedEntitiesCount === 0) return -1;
-    return techniqueA.health - techniqueB.health || techniqueA.sourceIndex - techniqueB.sourceIndex;
+    return healthOrder[techniqueA.state] - healthOrder[techniqueB.state]
+      || techniqueA.sourceIndex - techniqueB.sourceIndex;
   }
   function tacticNode(tactic, index, mode) {
     const { id, name, techniques } = tactic;
@@ -87,9 +92,9 @@
       option: option.id === 'weighted' ? 'matrix' : 'lanes',
       uniformFontSize: true
     };
-    if (option.id === 'weighted') variationObject.calculateGhosts = true;
-    const ghostControl = option.id === 'weighted' ? `<div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="${prefix}-ghosts" data-control="ghosts" autocomplete="off" checked><label class="form-check-label" for="${prefix}-ghosts">Calculate ghosts</label><span class="help-tooltip" tabindex="0" aria-label="About Calculate ghosts" aria-describedby="${prefix}-ghost-help">?<span class="help-tooltip-text" id="${prefix}-ghost-help" role="tooltip">If uncovered techniques are hidden, stay in the paint flow calculation and move to the end.</span></span></div>` : '';
-    return `<div class="viz-controls tab-controls"><section class="client-option-panel" aria-labelledby="${prefix}-client-option-title"><div class="control-group-heading"><strong id="${prefix}-client-option-title">filters</strong></div><div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="${prefix}-uncovered" data-control="uncovered" autocomplete="off" checked><label class="form-check-label" for="${prefix}-uncovered">Uncovered techniques</label></div></section><section class="variation-panel" aria-labelledby="${prefix}-variation-title"><div class="control-group-heading"><strong id="${prefix}-variation-title">Layout variations</strong><span>These settings belong only to this tab</span></div><div class="variation-checkboxes"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="${prefix}-uniform" data-control="uniform" autocomplete="off" checked><label class="form-check-label" for="${prefix}-uniform">Uniform font size</label></div>${ghostControl}</div><div class="variation-share" title="Variation settings for ${option.title}"><span class="variation-label">Final variation object—send this to us</span><code class="variation-code" data-variation-output>${JSON.stringify(variationObject)}</code><button type="button" class="btn btn-copy" data-copy-variation aria-live="polite">Copy variation object</button></div></section></div>`;
+    if (option.id === 'weighted') variationObject.fillTacticEmptySpace = true;
+    const fillControl = option.id === 'weighted' ? `<div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="${prefix}-fill-empty" data-control="fill-empty" autocomplete="off" checked><label class="form-check-label" for="${prefix}-fill-empty">Stretch techniques to fill tactic container</label><span class="help-tooltip" tabindex="0" aria-label="About stretching techniques" aria-describedby="${prefix}-fill-empty-help">?<span class="help-tooltip-text" id="${prefix}-fill-empty-help" role="tooltip">When uncovered techniques are hidden, remove their reserved positions and stretch the visible techniques to fill the tactic container.</span></span></div>` : '';
+    return `<div class="viz-controls tab-controls"><section class="client-option-panel" aria-labelledby="${prefix}-client-option-title"><div class="control-group-heading"><strong id="${prefix}-client-option-title">filters</strong></div><div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="${prefix}-uncovered" data-control="uncovered" autocomplete="off" checked><label class="form-check-label" for="${prefix}-uncovered">Uncovered techniques</label></div></section><section class="variation-panel" aria-labelledby="${prefix}-variation-title"><div class="control-group-heading"><strong id="${prefix}-variation-title">Layout variations</strong><span>These settings belong only to this tab</span></div><div class="variation-checkboxes"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="${prefix}-uniform" data-control="uniform" autocomplete="off" checked><label class="form-check-label" for="${prefix}-uniform">Uniform font size</label></div>${fillControl}</div><div class="variation-share" title="Variation settings for ${option.title}"><span class="variation-label">Final variation object—send this to us</span><code class="variation-code" data-variation-output>${JSON.stringify(variationObject)}</code><button type="button" class="btn btn-copy" data-copy-variation aria-live="polite">Copy variation object</button></div><div class="tab-export-action"><button type="button" class="btn export-slide">Download 1920×1080 PNG</button><span class="text-small" data-export-status role="status" aria-live="polite"></span></div></section></div>`;
   }
   function frame(option, index) {
     const article = document.createElement('article');
@@ -99,7 +104,7 @@
     article.setAttribute('role', 'tabpanel');
     article.setAttribute('aria-labelledby', `v19-tab-${option.id}`);
     article.hidden = index !== 0;
-    article.innerHTML = `<div class="option-heading"><div class="option-copy"><strong>${option.title}</strong><span class="text-small">${option.note}</span></div><button type="button" class="btn export-slide">Download 1920×1080 PNG</button></div>${controlsMarkup(option)}`;
+    article.innerHTML = `<div class="option-heading"><div class="option-copy"><strong>${option.title}</strong><span class="text-small">${option.note}</span></div></div>${controlsMarkup(option)}`;
     const shell = document.createElement('div');
     shell.className = 'slide-shell';
     const slide = document.createElement('section');
@@ -112,16 +117,18 @@
     const controls = {
       uncovered: article.querySelector('[data-control="uncovered"]'),
       uniform: article.querySelector('[data-control="uniform"]'),
-      ghosts: article.querySelector('[data-control="ghosts"]'),
+      fillEmpty: article.querySelector('[data-control="fill-empty"]'),
       variation: article.querySelector('[data-variation-output]'),
-      copy: article.querySelector('[data-copy-variation]')
+      copy: article.querySelector('[data-copy-variation]'),
+      export: article.querySelector('.export-slide'),
+      exportStatus: article.querySelector('[data-export-status]')
     };
     panelControls.set(option.id, controls);
     controls.uncovered.addEventListener('change', () => updateOption(option.id));
     controls.uniform.addEventListener('change', () => updateOption(option.id));
-    controls.ghosts?.addEventListener('change', () => updateOption(option.id));
+    controls.fillEmpty?.addEventListener('change', () => updateOption(option.id));
     controls.copy.addEventListener('click', () => copyVariation(option.id));
-    article.querySelector('.export-slide').addEventListener('click', () => downloadSlidePng(slide, option.id, article.querySelector('.export-slide')));
+    controls.export.addEventListener('click', () => downloadSlidePng(slide, option.id, controls.export, controls.exportStatus));
     return slide.querySelector('.slide-body');
   }
   function createOptionTab(option, index) {
@@ -165,6 +172,9 @@
   const measureCanvas = document.createElement('canvas');
   const measureContext = measureCanvas.getContext('2d');
   const lineCountCache = new Map();
+  function configuredMinimumFontSize(element, fallback = 12) {
+    return parseFloat(getComputedStyle(element).getPropertyValue('--min-font-size')) || fallback;
+  }
   function wrappedLineCount(text, maxWidth, fontSize, fontFamily) {
     const roundedWidth = Math.round(maxWidth * 2) / 2;
     const key = `${text}|${roundedWidth}|${fontSize}|${fontFamily}`;
@@ -205,6 +215,8 @@
   }
   function configureTechniqueGrid(tactic) {
     const mode = tactic.dataset.mode;
+    const panel = tactic.closest('.option');
+    const uniform = panel?.classList.contains('uniform-mode');
     const list = tactic.querySelector('.techs');
     const cells = [...list.querySelectorAll('.tech')].filter(cell => !cell.hidden);
     const count = cells.length || 1;
@@ -212,14 +224,14 @@
     const height = list.clientHeight;
     if (!width || !height) return;
     const fontFamily = getComputedStyle(cells[0] || tactic).fontFamily;
-    const preferredMinimumSize = mode === 'lane' ? 11 : 12;
-    const emergencyMinimumSize = mode === 'lane' ? 9 : 8;
+    const preferredMinimumSize = configuredMinimumFontSize(tactic, mode === 'lane' ? 10 : 12);
+    const emergencyMinimumSize = 7;
     const maximumSize = 32;
     const forcedColumns = mode === 'lane' && tactic.dataset.laneColumns ? Number(tactic.dataset.laneColumns) : null;
     const maximumColumns = Math.min(count, mode === 'lane' ? 20 : 8);
     const minimumCardWidth = mode === 'lane' ? 82 : 125;
     const columnCandidates = forcedColumns ? [forcedColumns] : Array.from({ length: maximumColumns }, (_, index) => index + 1);
-    function findBest(minimumSize) {
+    function findBest(minimumSize, requireAllToFit = true) {
       let bestCandidate = null;
       for (const columns of columnCandidates) {
         const rows = Math.ceil(count / columns);
@@ -227,22 +239,32 @@
         const cardHeight = (height - (rows - 1)) / rows;
         if (cardWidth < minimumCardWidth && columns > 1 && !forcedColumns) continue;
         const allFitAtMinimum = cells.every(cell => textFits(cell.textContent, cardWidth, cardHeight, minimumSize, fontFamily));
-        if (!allFitAtMinimum) continue;
+        if (requireAllToFit && !allFitAtMinimum) continue;
         const fontSizes = cells.map(cell => maximumFittingFont(cell.textContent, cardWidth, cardHeight, minimumSize, maximumSize, fontFamily));
         const minimumFont = Math.min(...fontSizes);
         const averageFont = fontSizes.reduce((sum, size) => sum + size, 0) / fontSizes.length;
         const emptySlots = columns * rows - count;
         const aspectRatio = cardWidth / Math.max(cardHeight, 1);
-        const score = minimumFont * 4 + averageFont - emptySlots * 0.1 - Math.abs(Math.log(Math.max(aspectRatio, 0.1) / 3));
+        const desiredCardHeight = minimumSize * 2.4 + 8;
+        const fittingCells = requireAllToFit ? cells.length : cells.filter(cell => textFits(cell.textContent, cardWidth, cardHeight, minimumSize, fontFamily)).length;
+        const score = (requireAllToFit ? 0 : fittingCells * 10000) + (uniform
+          ? -Math.abs(cardHeight - desiredCardHeight) * 3
+            + (minimumFont - minimumSize) * 0.25
+            - emptySlots * 0.1
+            - Math.abs(Math.log(Math.max(aspectRatio, 0.1) / 3))
+          : minimumFont * 4 + averageFont
+            - emptySlots * 0.1
+            - Math.abs(Math.log(Math.max(aspectRatio, 0.1) / 3)));
         if (!bestCandidate || score > bestCandidate.score) bestCandidate = { columns, rows, fontSizes, minimumFont, score };
       }
       return bestCandidate;
     }
-    const best = findBest(preferredMinimumSize) || findBest(emergencyMinimumSize);
+    const best = findBest(preferredMinimumSize)
+      || findBest(emergencyMinimumSize)
+      || findBest(emergencyMinimumSize, false);
     if (!best) return;
     list.style.setProperty('--cols', best?.columns ?? 1);
     list.style.setProperty('--rows', best?.rows ?? count);
-    const uniform = tactic.closest('.option')?.classList.contains('uniform-mode');
     cells.forEach((cell, index) => {
       const size = uniform ? best.minimumFont : best.fontSizes[index];
       cell.style.fontSize = `${size}px`;
@@ -297,9 +319,12 @@
     const gap = 3 * (tacticElements.length - 1);
     const available = Math.max(0, body.clientHeight - gap);
     if (!available) return;
-    let lower = 12;
-    let upper = 20;
-    let selectedFont = 12;
+    const panel = body.closest('.option');
+    const uniform = panel?.classList.contains('uniform-mode');
+    const preferredMinimumSize = uniform ? configuredMinimumFontSize(body, 10) : 12;
+    let lower = 7;
+    let upper = Math.max(20, preferredMinimumSize);
+    let selectedFont = lower;
     let plans = tacticElements.map(tactic => planLane(tactic, selectedFont));
     for (let iteration = 0; iteration < 6; iteration += 1) {
       const fontSize = (lower + upper) / 2;
@@ -342,9 +367,11 @@
     return element.scrollHeight > element.clientHeight + 1 || element.scrollWidth > element.clientWidth + 1;
   }
   function fitOverflowingCell(cell, minimumSize) {
-    const currentSize = parseFloat(cell.style.fontSize) || minimumSize;
+    const emergencyMinimumSize = 7;
+    const currentSize = Math.max(emergencyMinimumSize, parseFloat(cell.style.fontSize) || minimumSize);
+    cell.style.fontSize = `${currentSize}px`;
     if (!hasOverflow(cell)) return;
-    let low = 7;
+    let low = emergencyMinimumSize;
     let high = currentSize;
     cell.style.fontSize = `${low}px`;
     if (hasOverflow(cell)) return;
@@ -359,12 +386,22 @@
   function fitSlide(slide) {
     const visibleCells = [...slide.querySelectorAll('.tech')].filter(cell => !cell.hidden);
     if (!visibleCells.length) return;
-    const minimumSize = slide.dataset.option === 'lanes' ? 9 : 8;
-    if (slide.closest('.option')?.classList.contains('uniform-mode')) {
-      let high = Math.min(...visibleCells.map(cell => parseFloat(cell.style.fontSize) || minimumSize));
-      let low = 7;
+    const body = slide.querySelector('.slide-body');
+    const minimumSize = configuredMinimumFontSize(body, slide.dataset.option === 'lanes' ? 10 : 12);
+    const panel = slide.closest('.option');
+    const uniform = panel?.classList.contains('uniform-mode');
+    if (uniform) {
+      const emergencyMinimumSize = 7;
+      let high = Math.max(emergencyMinimumSize, Math.min(...visibleCells.map(cell => parseFloat(cell.style.fontSize) || minimumSize)));
+      let low = emergencyMinimumSize;
       visibleCells.forEach(cell => { cell.style.fontSize = `${low}px`; });
       if (visibleCells.some(hasOverflow)) return;
+      visibleCells.forEach(cell => { cell.style.fontSize = `${minimumSize}px`; });
+      if (!visibleCells.some(hasOverflow)) {
+        low = minimumSize;
+        high = Math.max(high, minimumSize);
+      }
+      else high = minimumSize;
       for (let iteration = 0; iteration < 6; iteration += 1) {
         const middle = (low + high) / 2;
         visibleCells.forEach(cell => { cell.style.fontSize = `${middle}px`; });
@@ -376,7 +413,7 @@
     } else {
       visibleCells.forEach(cell => fitOverflowingCell(cell, minimumSize));
     }
-    slide.querySelectorAll('.techs').forEach(list => {
+    if (!uniform) slide.querySelectorAll('.techs').forEach(list => {
       if (hasOverflow(list)) {
         [...list.querySelectorAll('.tech')]
           .filter(cell => !cell.hidden)
@@ -391,7 +428,7 @@
       slide.style.transform = `scale(${shell.clientWidth / 1920})`;
     });
   }
-  async function slideToPngData(slide) {
+  async function slideToPngBlob(slide) {
     if (typeof window.html2canvas !== 'function') throw new Error('The PNG renderer failed to load.');
     const clone = slide.cloneNode(true);
     clone.style.position = 'relative';
@@ -408,10 +445,21 @@
     staging.style.height = '1080px';
     staging.style.overflow = 'visible';
     staging.appendChild(clone);
-    document.body.appendChild(staging);
+    // Keep the export clone inside the scoped slide root so all
+    // `#mitre-v19-options …` presentation styles apply during capture.
+    root.appendChild(staging);
     try {
       const canvas = await window.html2canvas(clone, { backgroundColor: null, logging: false, scale: 1, width: 1920, height: 1080, useCORS: true });
-      return canvas.toDataURL('image/png');
+      const blob = await new Promise((resolve, reject) => {
+        canvas.toBlob(result => {
+          if (result?.size) resolve(result);
+          else reject(new Error('The browser returned an empty PNG.'));
+        }, 'image/png');
+      });
+      const signature = new Uint8Array(await blob.slice(0, 8).arrayBuffer());
+      const validSignature = [137, 80, 78, 71, 13, 10, 26, 10].every((byte, index) => signature[index] === byte);
+      if (!validSignature) throw new Error('PNG validation failed.');
+      return blob;
     } finally {
       staging.remove();
     }
@@ -424,76 +472,27 @@
     document.body.appendChild(link);
     link.click();
     link.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
   }
-  async function downloadSlidePng(slide, id, button) {
+  async function downloadSlidePng(slide, id, button, status) {
     const originalLabel = button.textContent;
     button.disabled = true;
     button.textContent = 'Rendering PNG…';
+    status.textContent = '';
     try {
       await document.fonts?.ready;
       const panel = slide.closest('.option');
       refreshLayouts(panel);
       fitAll(panel);
-      const pngData = await slideToPngData(slide);
-      const response = await fetch(pngData);
-      downloadBlob(await response.blob(), `mitre-v19-${id}-1920x1080.png`);
+      const pngBlob = await slideToPngBlob(slide);
+      downloadBlob(pngBlob, `mitre-v19-${id}-1920x1080.png`);
+      status.textContent = 'PNG downloaded.';
     } catch (error) {
       console.error(error);
-      exportStatus.textContent = `PNG export failed: ${error?.message || 'reload and try again.'}`;
+      status.textContent = `PNG export failed: ${error?.message || 'reload and try again.'}`;
     } finally {
       button.disabled = false;
       button.textContent = originalLabel;
-    }
-  }
-  async function exportAllPngs() {
-    if (typeof window.JSZip !== 'function' || typeof window.html2canvas !== 'function') {
-      exportStatus.textContent = 'Export libraries failed to load. Check the connection, then reload.';
-      return;
-    }
-    const originalLabel = exportAllButton.textContent;
-    exportAllButton.disabled = true;
-    exportAllButton.textContent = 'Preparing PNGs…';
-    exportStatus.textContent = `Preparing ${root.querySelectorAll('.slide').length} PNGs…`;
-    try {
-      await document.fonts?.ready;
-      const zip = new window.JSZip();
-      const slideElements = [...root.querySelectorAll('.slide')];
-      for (let index = 0; index < slideElements.length; index += 1) {
-        exportAllButton.textContent = `Rendering slide ${index + 1} of ${slideElements.length}…`;
-        exportStatus.textContent = `Rendering slide ${index + 1} of ${slideElements.length}…`;
-        const panel = slideElements[index].closest('.option');
-        const wasHidden = panel.hidden;
-        if (wasHidden) {
-          panel.hidden = false;
-          panel.classList.add('export-staging');
-        }
-        refreshLayouts(panel);
-        fitAll(panel);
-        scalePreviews(panel);
-        let pngData;
-        try {
-          pngData = await slideToPngData(slideElements[index]);
-        } finally {
-          if (wasHidden) {
-            panel.classList.remove('export-staging');
-            panel.hidden = true;
-          }
-        }
-        const id = slideElements[index].dataset.option;
-        zip.file(`mitre-v19-${id}-1920x1080.png`, pngData.split(',')[1], { base64: true });
-      }
-      exportAllButton.textContent = 'Creating ZIP…';
-      exportStatus.textContent = 'Creating the PNG ZIP…';
-      const blob = await zip.generateAsync({ type: 'blob' });
-      downloadBlob(blob, 'mitre-v19-slide-options-png.zip');
-      exportStatus.textContent = 'PNG ZIP downloaded.';
-    } catch (error) {
-      console.error(error);
-      exportStatus.textContent = `Export failed: ${error?.message || 'reload the page and try again.'}`;
-    } finally {
-      exportAllButton.disabled = false;
-      exportAllButton.textContent = originalLabel;
     }
   }
   function getOptionPanel(optionId = activeOptionId) {
@@ -520,23 +519,23 @@
     if (!panel || !state || !controls) return;
     state.uncoveredTechniques = controls.uncovered.checked;
     state.uniformFontSize = controls.uniform.checked;
-    state.calculateGhosts = optionId === 'weighted' && Boolean(controls.ghosts?.checked);
+    state.fillTacticEmptySpace = optionId === 'weighted' && Boolean(controls.fillEmpty?.checked);
     const show = state.uncoveredTechniques;
-    const reflow = state.calculateGhosts;
+    const keepGhostGaps = optionId === 'weighted' && !state.fillTacticEmptySpace;
     panel.classList.toggle('uniform-mode', state.uniformFontSize);
     const variationObject = {
       option: optionId === 'weighted' ? 'matrix' : 'lanes',
       uniformFontSize: state.uniformFontSize
     };
-    if (optionId === 'weighted') variationObject.calculateGhosts = state.calculateGhosts;
+    if (optionId === 'weighted') variationObject.fillTacticEmptySpace = state.fillTacticEmptySpace;
     const variation = JSON.stringify(variationObject);
     controls.variation.textContent = variation;
     controls.variation.setAttribute('aria-label', `Variation settings for ${options.find(option => option.id === optionId)?.title}: ${variation}`);
     controls.copy.dataset.copyText = variation;
     controls.copy.title = 'Copy variation object';
     panel.querySelectorAll('.tech.uncovered').forEach(el => {
-      el.hidden = !show && !reflow;
-      el.classList.toggle('reflow-gap', !show && reflow);
+      el.hidden = !show && !keepGhostGaps;
+      el.classList.toggle('ghost-gap', !show && keepGhostGaps);
       el.setAttribute('aria-hidden', String(!show));
     });
     panel.querySelectorAll('.uncovered-key').forEach(el => el.hidden = !show);
@@ -589,7 +588,6 @@
       });
     });
   }
-  exportAllButton.addEventListener('click', exportAllPngs);
   window.addEventListener('resize', scheduleLayout);
   window.addEventListener('load', scheduleLayout);
   document.fonts?.ready.then(scheduleLayout);
