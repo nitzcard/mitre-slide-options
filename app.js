@@ -180,7 +180,7 @@
     const key = `${text}|${roundedWidth}|${fontSize}|${fontFamily}`;
     if (lineCountCache.has(key)) return lineCountCache.get(key);
     measureContext.font = `500 ${fontSize}px ${fontFamily}`;
-    const words = text.trim().split(/\s+/);
+    const words = text.trim().split(/\s+|(?<=[/-])/).filter(Boolean);
     let lines = 1;
     let current = '';
     for (const word of words) {
@@ -188,7 +188,8 @@
         lineCountCache.set(key, Infinity);
         return Infinity;
       }
-      const candidate = current ? `${current} ${word}` : word;
+      const separator = current && !/[/-]$/.test(current) ? ' ' : '';
+      const candidate = current ? `${current}${separator}${word}` : word;
       if (measureContext.measureText(candidate).width <= maxWidth) current = candidate;
       else {
         lines += 1;
@@ -199,8 +200,8 @@
     return lines;
   }
   function textFits(text, width, height, fontSize, fontFamily) {
-    const lineCount = wrappedLineCount(text, Math.max(1, width - 16), fontSize, fontFamily);
-    return Number.isFinite(lineCount) && lineCount * fontSize * 1.05 <= Math.max(1, height - 6);
+    const lineCount = wrappedLineCount(text, Math.max(1, width - 12), fontSize, fontFamily);
+    return Number.isFinite(lineCount) && lineCount * fontSize <= Math.max(1, height - 4);
   }
   function maximumFittingFont(text, width, height, minimum, maximum, fontFamily) {
     if (!textFits(text, width, height, minimum, fontFamily)) return minimum;
@@ -228,8 +229,8 @@
     const emergencyMinimumSize = 7;
     const maximumSize = 32;
     const forcedColumns = mode === 'lane' && tactic.dataset.laneColumns ? Number(tactic.dataset.laneColumns) : null;
-    const maximumColumns = Math.min(count, mode === 'lane' ? 20 : 8);
-    const minimumCardWidth = mode === 'lane' ? 82 : 125;
+    const maximumColumns = Math.min(count, mode === 'lane' ? 20 : 10);
+    const minimumCardWidth = mode === 'lane' ? 82 : 110;
     const columnCandidates = forcedColumns ? [forcedColumns] : Array.from({ length: maximumColumns }, (_, index) => index + 1);
     function findBest(minimumSize, requireAllToFit = true) {
       let bestCandidate = null;
@@ -300,12 +301,12 @@
     for (let columns = 1; columns <= maximumColumns; columns += 1) {
       const rows = Math.ceil(cells.length / columns);
       const cardWidth = (width - (columns - 1) * 2) / columns;
-      const textWidth = cardWidth - 20;
+      const textWidth = cardWidth - 16;
       if (textWidth < 60 && columns > 1) continue;
       const lineCounts = cells.map(cell => wrappedLineCount(cell.textContent, textWidth, fontSize, fontFamily));
       if (lineCounts.some(lines => !Number.isFinite(lines))) continue;
       const maximumLines = Math.max(...lineCounts, 1);
-      const rowHeight = maximumLines * fontSize * 1.05 + 8;
+      const rowHeight = maximumLines * fontSize + 6;
       const techniqueRequiredHeight = rows * rowHeight + (rows - 1) + 12;
       const requiredHeight = Math.max(techniqueRequiredHeight, headerRequiredHeight);
       const emptySlots = columns * rows - cells.length;
@@ -449,7 +450,8 @@
     // `#mitre-v19-options …` presentation styles apply during capture.
     root.appendChild(staging);
     try {
-      const canvas = await window.html2canvas(clone, { backgroundColor: null, logging: false, scale: 1, width: 1920, height: 1080, useCORS: true });
+      const canvas = await window.html2canvas(clone, { backgroundColor: '#100f15', logging: false, scale: 1, width: 1920, height: 1080, useCORS: true });
+      if (canvas.width !== 1920 || canvas.height !== 1080) throw new Error('PNG dimensions are invalid.');
       const blob = await new Promise((resolve, reject) => {
         canvas.toBlob(result => {
           if (result?.size) resolve(result);
