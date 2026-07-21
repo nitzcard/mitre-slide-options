@@ -17,6 +17,7 @@ The PNG export library loads from CDN, so an internet connection is required for
 - Preferred minimum font size is controlled by the scoped CSS variable `--min-font-size`: 12px for the weighted matrix and 10px for lanes. The layout keeps that value whenever possible and only shrinks further when necessary to prevent clipping.
 - **Stretch techniques to fill tactic container** is available only for the weighted matrix. When uncovered techniques are hidden, it removes their reserved positions and stretches the visible techniques to fill the tactic container.
 - Technique order is fixed in both layouts: low health (red) at the top, followed by progressively better health, with uncovered techniques last. Weighted-matrix grids use CSS row flow so each full row is painted before moving down to the next one.
+- Tactic counters use Cardinal-style coverage: covered techniques divided by total techniques. Filtering uncovered techniques does not change the counter.
 
 ## Deploy
 

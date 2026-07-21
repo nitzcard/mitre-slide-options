@@ -56,7 +56,7 @@
     section.dataset.mode = mode;
     section.dataset.tacticId = id;
     section.dataset.total = String(count);
-    section.setAttribute('aria-label', `${name}: ${count} techniques`);
+    section.setAttribute('aria-label', `${name}: calculating coverage`);
     const head = document.createElement('div');
     head.className = 'tactic-head text-small';
     head.innerHTML = `<span class="tactic-name">${name}</span><span class="tactic-count">${count}/${count}</span>`;
@@ -72,6 +72,13 @@
     const sortedTechniques = techniques
       .map((technique, sourceIndex) => buildTechniqueView(technique, index, sourceIndex))
       .sort(cardinalTcs1TechniqueSorter);
+    const coveredCount = sortedTechniques.filter(({ state }) => state !== 'uncovered').length;
+    section.dataset.covered = String(coveredCount);
+    const countLabel = head.querySelector('.tactic-count');
+    countLabel.textContent = `${coveredCount}/${count}`;
+    countLabel.title = `${coveredCount} covered of ${count} techniques`;
+    countLabel.setAttribute('aria-label', `${coveredCount} covered of ${count} techniques`);
+    section.setAttribute('aria-label', `${name}: ${coveredCount} covered of ${count} techniques`);
     sortedTechniques.forEach(({ technique, state, health, recommendationsCount }) => {
       const cell = document.createElement('div');
       cell.className = `tech text-small ${state}`;
@@ -543,10 +550,10 @@
     panel.querySelectorAll('.uncovered-key').forEach(el => el.hidden = !show);
     panel.querySelectorAll('.tactic').forEach(tactic => {
       const total = Number(tactic.dataset.total);
-      const visible = show ? total : tactic.querySelectorAll('.tech:not(.uncovered)').length;
-      tactic.querySelector('.tactic-count').textContent = `${visible}/${total}`;
+      const covered = Number(tactic.dataset.covered);
+      tactic.querySelector('.tactic-count').textContent = `${covered}/${total}`;
       const name = tactic.querySelector('.tactic-name').textContent;
-      tactic.setAttribute('aria-label', `${name}: ${visible} of ${total} techniques visible`);
+      tactic.setAttribute('aria-label', `${name}: ${covered} covered of ${total} techniques`);
     });
     if (optionId === activeOptionId) scheduleLayout();
   }
