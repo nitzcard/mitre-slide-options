@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdnjs.cloudflare.com; style-src 'self'; img-src 'self' blob: data:; font-src 'self'; connect-src 'self' blob: data:; object-src 'none'; base-uri 'self'; form-action 'none'">
+  <title>Cardinal MITRE v19 Slide Options</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="mitre-v19-options">
+  <div class="client-instructions">
+    <strong>Review every variation</strong>
+    <span>Try all checkbox combinations and review every option—each tab represents one option. When you find your preferred version, copy its variation object and send it to us.</span>
+  </div>
+  <div class="viz-controls">
+    <div class="form-check form-switch">
+      <input class="form-check-input" type="checkbox" id="v19-uncovered" autocomplete="off" checked>
+      <label class="form-check-label" for="v19-uncovered">Uncovered techniques</label>
+    </div>
+    <div class="form-check form-switch">
+      <input class="form-check-input" type="checkbox" id="v19-uniform" autocomplete="off" checked>
+      <label class="form-check-label" for="v19-uniform">Uniform size &amp; text</label>
+    </div>
+    <div class="form-check form-switch" id="v19-ghost-control">
+      <input class="form-check-input" type="checkbox" id="v19-reflow" autocomplete="off" checked>
+      <label class="form-check-label" for="v19-reflow">Calculate ghosts</label>
+      <span class="help-tooltip" tabindex="0" aria-label="About Calculate ghosts" aria-describedby="v19-ghost-help">?
+        <span class="help-tooltip-text" id="v19-ghost-help" role="tooltip">Hidden techniques stay in the flow calculation and move to the end.</span>
+      </span>
+    </div>
+    <div class="variation-share" title="Settings for the active option">
+      <span class="variation-label">Variation</span>
+      <code class="variation-code" id="v19-variation">{"uncoveredTechniques":true,"uniformSizeAndText":true,"calculateGhosts":true}</code>
+      <button type="button" class="btn btn-copy" id="v19-copy-variation" aria-live="polite">Copy</button>
+    </div>
+    <span class="viz-badge">Cardinal MITRE v19 · 15 tactics</span>
+    <button type="button" class="btn btn-primary" id="v19-export-all">Export all PNGs</button>
+    <span class="text-small" id="v19-export-status" role="status" aria-live="polite"></span>
+  </div>
+  <div class="option-tabs" id="v19-option-tabs" role="tablist" aria-label="Slide layout options"></div>
+  <div id="v19-slides"></div>
+</div>
+<script src="mitre-data.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
