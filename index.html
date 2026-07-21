@@ -10,36 +10,30 @@
 </head>
 <body>
 <div id="mitre-v19-options">
-  <div class="client-instructions">
-    <strong>Review every variation</strong>
-    <span>Try all checkbox combinations and review every option—each tab represents one option. When you find your preferred version, copy its variation object and send it to us.</span>
-  </div>
-  <div class="viz-controls">
-    <div class="form-check form-switch">
-      <input class="form-check-input" type="checkbox" id="v19-uncovered" autocomplete="off" checked>
-      <label class="form-check-label" for="v19-uncovered">Uncovered techniques</label>
+  <section class="client-instructions" aria-labelledby="review-instructions-title">
+    <div class="instruction-heading">
+      <span class="instruction-kicker">Client review</span>
+      <strong id="review-instructions-title">Choose your preferred slide layout</strong>
     </div>
-    <div class="form-check form-switch">
-      <input class="form-check-input" type="checkbox" id="v19-uniform" autocomplete="off" checked>
-      <label class="form-check-label" for="v19-uniform">Uniform size &amp; text</label>
+    <ol class="instruction-steps">
+      <li>Choose a highlighted layout tab—it is part of the variation.</li>
+      <li>Set the uncovered-techniques client option.</li>
+      <li>Try every highlighted variation combination.</li>
+      <li>At the end, click <strong>Copy variation object</strong> and send the copied object to us.</li>
+    </ol>
+  </section>
+  <section class="layout-variation-panel" aria-labelledby="layout-variation-title">
+    <div class="control-group-heading">
+      <strong id="layout-variation-title">Layout variation</strong>
+      <span>Select one option tab</span>
     </div>
-    <div class="form-check form-switch" id="v19-ghost-control">
-      <input class="form-check-input" type="checkbox" id="v19-reflow" autocomplete="off" checked>
-      <label class="form-check-label" for="v19-reflow">Calculate ghosts</label>
-      <span class="help-tooltip" tabindex="0" aria-label="About Calculate ghosts" aria-describedby="v19-ghost-help">?
-        <span class="help-tooltip-text" id="v19-ghost-help" role="tooltip">Hidden techniques stay in the flow calculation and move to the end.</span>
-      </span>
-    </div>
-    <div class="variation-share" title="Settings for the active option">
-      <span class="variation-label">Variation</span>
-      <code class="variation-code" id="v19-variation">{"uncoveredTechniques":true,"uniformSizeAndText":true,"calculateGhosts":true}</code>
-      <button type="button" class="btn btn-copy" id="v19-copy-variation" aria-live="polite">Copy</button>
-    </div>
+    <div class="option-tabs" id="v19-option-tabs" role="tablist" aria-label="Slide layout options"></div>
+  </section>
+  <div class="page-actions">
     <span class="viz-badge">Cardinal MITRE v19 · 15 tactics</span>
     <button type="button" class="btn btn-primary" id="v19-export-all">Export all PNGs</button>
     <span class="text-small" id="v19-export-status" role="status" aria-live="polite"></span>
   </div>
-  <div class="option-tabs" id="v19-option-tabs" role="tablist" aria-label="Slide layout options"></div>
   <div id="v19-slides"></div>
 </div>
 <script src="mitre-data.js"></script>
